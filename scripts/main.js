@@ -1,94 +1,94 @@
-(function() {
-  "use strict";
+/* ============================================================
+   MUTIARA GRACELLA — PRO PORTFOLIO SCRIPTS (multi-page)
+   scripts/main.js
+   ============================================================ */
+(function () {
+  'use strict';
 
-  window.addEventListener('load', () => {
-    on_page_load()
+  /* ── SMOOTH SCROLL (in-page anchors only) ────────────────── */
+  document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var id = this.getAttribute('href');
+      if (id === '#') return;
+      var el = document.querySelector(id);
+      if (el) { e.preventDefault(); el.scrollIntoView({ behavior:'smooth' }); }
+    });
   });
 
-  /**
-   * Function gets called when page is loaded.
-   */
-  function on_page_load() {
-    // Initialize On-scroll Animations
-    AOS.init({
-      anchorPlacement: 'top-left',
-      duration: 600,
-      easing: "ease-in-out",
-      once: true,
-      mirror: false,
-      disable: 'mobile'
+  /* ── SCROLL REVEAL ───────────────────────────────────────── */
+  document.querySelectorAll('.sec > *, .hero-sec > *').forEach(function (el) {
+    el.classList.add('reveal-pro');
+  });
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
     });
-  }
+  }, { threshold:0.07 });
+  document.querySelectorAll('.reveal-pro').forEach(function (el) { io.observe(el); });
 
-  /**
-   * Navbar effects and scrolltop buttons upon scrolling
-   */
-  const navbar = document.getElementById('header-nav')
-  var body = document.getElementsByTagName("body")[0]
-  const scrollTop = document.getElementById('scrolltop')
-  window.onscroll = () => {
-    if (window.scrollY > 0) {
-      navbar.classList.add('fixed-top', 'shadow-sm')
-      body.style.paddingTop = navbar.offsetHeight + "px"
-      scrollTop.style.visibility = "visible";
-      scrollTop.style.opacity = 1;
-    } else {
-      navbar.classList.remove('fixed-top', 'shadow-sm')
-      body.style.paddingTop = "0px"
-      scrollTop.style.visibility = "hidden";
-      scrollTop.style.opacity = 0;
+  /* ── SKILL BARS ANIMATE ──────────────────────────────────── */
+  var bars = document.querySelectorAll('.sk-bar');
+  var barObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        setTimeout(function () { e.target.classList.add('animated'); }, 100);
+        barObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold:0.5 });
+  bars.forEach(function (b) { barObserver.observe(b); });
+
+  /* ── COUNTER ANIMATE ─────────────────────────────────────── */
+  function countUp(el, target, suffix) {
+    var start = 0, dur = 1400, t0 = null;
+    function step(ts) {
+      if (!t0) t0 = ts;
+      var p = Math.min((ts - t0) / dur, 1);
+      var ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(start + (target - start) * ease) + suffix;
+      if (p < 1) requestAnimationFrame(step);
     }
+    requestAnimationFrame(step);
+  }
+  var numObs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var el = e.target;
+      var raw = parseInt(el.dataset.count || el.textContent);
+      var suffix = el.dataset.suffix || (el.textContent.includes('+') ? '+' : el.textContent.includes('%') ? '%' : '');
+      if (!isNaN(raw)) countUp(el, raw, suffix);
+      numObs.unobserve(el);
+    });
+  }, { threshold:0.8 });
+  document.querySelectorAll('.hs-num').forEach(function (el) { numObs.observe(el); });
+
+  /* ── LIGHTBOX ────────────────────────────────────────────── */
+  var lb  = document.getElementById('lbPro');
+  var img = document.getElementById('lbImg');
+  var cap = document.getElementById('lbCap');
+
+  window.openCert = function (src, caption) {
+    img.src = src; img.alt = caption;
+    if (cap) cap.textContent = caption;
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+  window.closeCert = function () {
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+    setTimeout(function () { img.src = ''; }, 250);
   };
 
-  /**
-   * Masonry Grid
-   */
-  var elem = document.querySelector('.grid');
-  if(elem) {
-    imagesLoaded(elem, function() {
-      new Masonry(elem, {
-        itemSelector: '.grid-item',
-        percentPosition: true,
-        horizontalOrder: true
-      });
-    })
-  }
+  /* Cert strip click */
+  document.querySelectorAll('.cs-item').forEach(function (item) {
+    item.addEventListener('click', function () {
+      var i = item.querySelector('img');
+      if (i) openCert(i.src, item.querySelector('.cs-label').textContent.trim());
+    });
+  });
 
-  /**
-   * Big Picture Popup for images and videos
-   */
-   document.querySelectorAll("[data-bigpicture]").forEach((function(e) {
-     e.addEventListener("click", (function(t){
-       t.preventDefault();
-       const data =JSON.parse(e.dataset.bigpicture)
-       BigPicture({
-        el: t.target,
-        ...data
-      })
-     })
-    )
-  }))
-
-  /**
-   * Big Picture Popup for Photo Gallary
-   */
-   document.querySelectorAll(".bp-gallery a").forEach((function(e) {
-    var caption = e.querySelector('figcaption')
-    var img = e.querySelector('img')
-    // set the link present on the item to the caption in full view
-    img.dataset.caption = '<a class="link-light" target="_blank" href="' + e.href + '">' + caption.innerHTML + '</a>';
-    window.console.log(caption, img)
-     e.addEventListener("click", (function(t){
-       t.preventDefault();
-       BigPicture({
-        el: t.target,
-        gallery: '.bp-gallery',
-      })
-     })
-    )
-  }))
-
-  // Add your javascript here
-
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeCert();
+  });
 
 })();
